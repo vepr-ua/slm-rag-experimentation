@@ -80,25 +80,52 @@ class CrossValidatedCollector:
         return qa_pairs
 
     def _fetch_questions(self, max_questions: int) -> list[dict]:
-        """Fetch questions from StackExchange API."""
-        questions = []
+        """
+        Fetch questions from StackExchange API.
 
-        try:
-            # Fetch questions with the specified tags
-            response = self.client.fetch(
-                "questions",
-                tagged=";".join(self.config.stackexchange_tags),
-                sort="votes",
-                order="desc",
-                filter="withbody",  # Include question body
-                min=self.config.stackexchange_min_score,
-            )
+        Queries each tag individually to get diverse results (OR logic),
+        then deduplicates and sorts by score.
+        """
+        all_questions = {}  # Use dict to deduplicate by question_id
 
-            if "items" in response:
-                questions = response["items"][:max_questions]
+        logger.info(f"Fetching questions for {len(self.config.stackexchange_tags)} tags...")
 
-        except Exception as e:
-            logger.error(f"Error fetching questions: {e}")
+        for tag in self.config.stackexchange_tags:
+            try:
+                logger.debug(f"Fetching questions tagged '{tag}'")
+
+                # Fetch questions for this tag
+                response = self.client.fetch(
+                    "questions",
+                    tagged=tag,
+                    sort="votes",
+                    order="desc",
+                    filter="withbody",  # Include question body
+                    min=self.config.stackexchange_min_score,
+                )
+
+                if "items" in response:
+                    for question in response["items"]:
+                        # Deduplicate by question_id
+                        qid = question["question_id"]
+                        if qid not in all_questions:
+                            all_questions[qid] = question
+
+                # Small delay between tag queries to be nice to API
+                time.sleep(0.5)
+
+            except Exception as e:
+                logger.warning(f"Error fetching questions for tag '{tag}': {e}")
+                continue
+
+        # Convert to list and sort by score
+        questions = list(all_questions.values())
+        questions.sort(key=lambda q: q.get("score", 0), reverse=True)
+
+        # Limit to max_questions
+        questions = questions[:max_questions]
+
+        logger.info(f"Fetched {len(questions)} unique questions across all tags")
 
         return questions
 

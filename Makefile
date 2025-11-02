@@ -25,6 +25,16 @@ help:
 	@echo "  make collect-arxiv    - Collect ArXiv papers metadata"
 	@echo "  make collect-arxiv-pdfs - Download ArXiv PDFs (very slow)"
 	@echo ""
+	@echo "Synthetic Q&A Generation (requires Claude API key):"
+	@echo "  make generate-qa-test - Generate from 10 papers (test, ~\$0.24)"
+	@echo "  make generate-qa      - Generate from all papers (~\$4-5)"
+	@echo ""
+	@echo "Model Training (requires GPU with 6+ GB VRAM):"
+	@echo "  make combine-datasets - Combine Cross Validated + ArXiv datasets"
+	@echo "  make train            - Train Llama 3.2 3B with QLoRA (default config)"
+	@echo "  make train-full       - Combine datasets and train (4-12 hours)"
+	@echo "  make train-custom     - Train with custom config (CONFIG=path/to/config.json)"
+	@echo ""
 	@echo "Infrastructure:"
 	@echo "  make docker-up    - Start Docker services (SurrealDB)"
 	@echo "  make docker-down  - Stop Docker services"
@@ -116,6 +126,10 @@ test-config:
 	@echo "Testing configuration loading from .env..."
 	python scripts/test_config.py
 
+debug-stackexchange:
+	@echo "Testing StackExchange API connection..."
+	python scripts/debug_stackexchange.py
+
 # Data Collection (for model training)
 # Note: Respects API rate limits. Add API keys to .env for higher limits.
 collect-data:
@@ -140,6 +154,41 @@ collect-arxiv-pdfs:
 	@echo "⚠️  Downloading PDFs may take a long time. Press Ctrl+C to cancel..."
 	@sleep 3
 	python scripts/collect_data.py --source arxiv --download-pdfs
+
+# Synthetic Q&A Generation (requires ANTHROPIC_API_KEY in .env)
+generate-qa-test:
+	@echo "Generating synthetic Q&A from 10 papers (test run)..."
+	python scripts/generate_synthetic_qa.py --source arxiv --max-papers 10
+
+generate-qa:
+	@echo "⚠️  This will generate Q&A from ALL ArXiv papers. Estimated cost: ~\$4-5."
+	@echo "Press Ctrl+C within 5 seconds to cancel..."
+	@sleep 5
+	python scripts/generate_synthetic_qa.py --source arxiv
+
+# Model Training (requires GPU with 6+ GB VRAM recommended)
+combine-datasets:
+	@echo "Combining Cross Validated and ArXiv synthetic datasets..."
+	python scripts/train_model.py --combine-only
+
+train:
+	@echo "Training Llama 3.2 3B with QLoRA..."
+	python scripts/train_model.py
+
+train-full:
+	@echo "⚠️  This will combine datasets and train the model. Estimated time: 4-12 hours."
+	@echo "Requires: GPU with 6+ GB VRAM (RTX 3060+, M1 Max+)"
+	@echo "Press Ctrl+C within 5 seconds to cancel..."
+	@sleep 5
+	python scripts/train_model.py --combine-datasets
+
+train-custom:
+	@echo "Training with custom configuration..."
+	@if [ -z "$(CONFIG)" ]; then \
+		echo "❌ Please provide CONFIG path: make train-custom CONFIG=configs/my_config.json"; \
+		exit 1; \
+	fi
+	python scripts/train_model.py --config $(CONFIG)
 
 # Knowledge base (deprecated for now, focusing on model training)
 ingest-data:
