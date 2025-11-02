@@ -1,6 +1,28 @@
 # Experimentation Intelligence: SLM + GraphRAG
 
-A specialized Small Language Model (SLM) powered by Graph-based Retrieval Augmented Generation (GraphRAG) for answering questions about experimentation methodology, statistical analysis, and A/B testing best practices.
+A specialized Small Language Model (SLM) for answering questions about experimentation methodology, statistical analysis, and A/B testing best practices.
+
+**Current Focus**: Fine-tuning Llama 3.2 3B with QLoRA on experimentation Q&A data.
+
+**Future**: Graph-based Retrieval Augmented Generation (GraphRAG) for enhanced multi-hop reasoning.
+
+## Project Status
+
+**Phase I: Model Training** (In Progress)
+
+- ✅ Data collection infrastructure (Cross Validated, ArXiv)
+- ✅ Synthetic Q&A generation with Claude API
+- ✅ QLoRA training infrastructure with HuggingFace TRL
+- 🔄 Generating ~860 synthetic Q&A pairs from 172 ArXiv papers
+- ⏭️ Fine-tune Llama 3.2 3B on 5,000-10,000 training examples
+- ⏭️ Build evaluation framework
+- ⏭️ Deploy inference API
+
+**Phase II: GraphRAG Enhancement** (Planned)
+
+- Knowledge graph construction
+- SurrealDB integration
+- Graph-enhanced retrieval
 
 ## Usage of LLMs
 
@@ -89,105 +111,95 @@ Build a domain-specific AI assistant that provides expert-level guidance on:
 └─────────────────────────────────────────────────────────┘
 ```
 
-## Phase I: Core Experimentation SLM (4-6 weeks)
+## Phase I: Model Training (Current, ~1-2 weeks)
 
-### Week 1-2: Knowledge Base Construction
+**Rationale**: Start with fine-tuning to establish baseline performance before building GraphRAG infrastructure.
 
-**Goal**: Build a comprehensive graph of experimentation concepts
+### Data Collection ✅
 
-- [ ] **Data Collection**
-  - Scrape public stats textbooks (OpenStax, etc.)
-  - Fetch experimentation papers from ArXiv
-  - Collect industry blog posts (Booking.com, Netflix, Airbnb experimentation blogs)
-  - Curate Wikipedia articles on statistical concepts
+**Goal**: Gather training data from public sources
 
-- [ ] **Entity Extraction**
-  - Identify core concepts: "p-value", "confidence interval", "A/B test", etc.
-  - Extract definitions, formulas, examples
-  - Tag by category (statistical test, metric, methodology, etc.)
+- [x] **Cross Validated (StackExchange)**
+  - Real Q&A about experimentation and statistics
+  - Tags: a-b-testing, experimental-design, sample-size, statistical-power, etc.
+  - ~100-1,000 question-answer pairs
 
-- [ ] **Relationship Mapping**
-  - Map concept relationships: "power analysis REQUIRES sample_size, effect_size, significance_level"
-  - Build prerequisite chains: "understand p-value BEFORE understanding FDR"
-  - Connect related methods: "t-test SIMILAR_TO mann_whitney"
+- [x] **ArXiv Papers**
+  - Research papers on experimentation methodology
+  - ~172 papers collected
+  - Metadata and abstracts
 
-- [ ] **SurrealDB Schema Design**
+### Synthetic Q&A Generation ✅
 
-```sql
-  DEFINE TABLE concept SCHEMAFULL;
-  DEFINE FIELD name ON concept TYPE string;
-  DEFINE FIELD definition ON concept TYPE string;
-  DEFINE FIELD category ON concept TYPE string;
-  DEFINE FIELD embedding ON concept TYPE array;
+**Goal**: Generate training data from ArXiv papers using Claude API
 
-  DEFINE TABLE document SCHEMAFULL;
-  DEFINE FIELD content ON document TYPE string;
-  DEFINE FIELD source ON document TYPE string;
-  DEFINE FIELD chunk_index ON document TYPE int;
+- [x] **Claude API Integration**
+  - Rate-limited wrapper with retry logic
+  - Cost estimation and tracking
 
-  DEFINE TABLE relates_to TYPE RELATION;
-  DEFINE FIELD relationship_type ON relates_to TYPE string;
-  DEFINE FIELD strength ON relates_to TYPE float;
-```
+- [x] **Q&A Generation from Abstracts**
+  - 5 diverse Q&A pairs per paper
+  - Question types: definition, methodology, comparison, best practice
+  - ~860 synthetic Q&A pairs from 172 papers
 
-### Week 3-4: GraphRAG Pipeline
+- [x] **Quality Validation**
+  - Length validation (50-5000 chars)
+  - Content quality checks
+  - ChatML formatting for Llama 3.2
 
-**Goal**: Implement intelligent retrieval using graph structure
+### Model Training (In Progress)
 
-- [ ] **Query Understanding**
-  - Entity recognition in user questions
-  - Intent classification (definition, calculation, methodology)
-  - Ambiguity detection
+**Goal**: Fine-tune Llama 3.2 3B with QLoRA
 
-- [ ] **Graph Traversal**
-  - BFS/DFS for concept exploration
-  - Weighted path finding (stronger relationships = higher priority)
-  - Subgraph extraction around query entities
+- [x] **Training Infrastructure**
+  - QLoRA configuration (4-bit quantization + LoRA adapters)
+  - HuggingFace TRL SFTTrainer
+  - Dataset combination and preprocessing
 
-- [ ] **Context Assembly**
-  - Combine graph nodes into coherent context
-  - Rank by relevance (embedding similarity + graph centrality)
-  - Limit context to model window (2K-4K tokens)
+- [ ] **Training Execution**
+  - Combine Cross Validated + ArXiv synthetic datasets
+  - Train for 3 epochs on 5,000-10,000 examples
+  - Evaluate on holdout test set
 
-- [ ] **Retrieval Evaluation**
-  - Create test set of 50-100 questions
-  - Measure retrieval precision/recall
-  - Compare to baseline (vector-only RAG)
+- [ ] **Model Artifacts**
+  - Save LoRA adapters
+  - Export merged model
+  - Document hyperparameters
 
-### Week 5: SLM Integration
+### Evaluation Framework (Next)
 
-**Goal**: Connect retrieval to language model
+**Goal**: Measure model quality
 
-- [ ] **Model Selection**
-  - Benchmark Phi-3-mini (3.8B), Llama 3.2 (3B), Qwen2.5 (3B)
-  - Test on statistics Q&A without fine-tuning
-  - Select best base model
-
-- [ ] **Prompt Engineering**
-  - Design prompts for different question types
-  - Include graph context effectively
-  - Handle uncertainty (when to say "I don't know")
-
-- [ ] **Inference Pipeline**
-  - Set up Ollama or vLLM locally
-  - Implement response streaming
-  - Add caching for common queries
-
-### Week 6: API & Evaluation
-
-**Goal**: Production-ready API with quality metrics
-
-- [ ] **FastAPI Server**
-  - `/query` endpoint with streaming support
-  - `/health` and `/metrics` endpoints
-  - Request validation and error handling
-
-- [ ] **Evaluation Framework**
-  - 100 test questions covering:
+- [ ] **Test Set Creation**
+  - 100 curated questions covering:
     - Definitions (20%)
     - Calculations (30%)
     - Methodology (30%)
     - Best practices (20%)
+
+- [ ] **Metrics**
+  - Accuracy on classification questions
+  - ROUGE/BLEU for generation quality
+  - Human evaluation on critical questions
+
+- [ ] **Target Performance**
+  - 80%+ accuracy overall
+  - 85%+ on definition questions
+  - 75%+ on methodology questions
+
+### Deployment (Final)
+
+**Goal**: Serve the fine-tuned model
+
+- [ ] **Inference API**
+  - FastAPI server with model loading
+  - `/query` endpoint for Q&A
+  - Response streaming support
+
+- [ ] **Optimization**
+  - Quantization for faster inference
+  - Request batching
+  - Response caching
   - Metrics: Accuracy, Completeness, Citation quality
   - Latency benchmarks
 
@@ -196,55 +208,103 @@ Build a domain-specific AI assistant that provides expert-level guidance on:
   - Usage examples
   - Deployment guide
 
-## Future Phases
+## Phase II: GraphRAG Enhancement (Planned, ~4-6 weeks)
 
-### Phase II: Internal Knowledge Integration (Weeks 7-10)
+**Goal**: Add graph-based retrieval for multi-hop reasoning and enhanced context
 
-- Ingest internal experiment documentation
-- Add company-specific best practices
-- Privacy-preserving graph (redact sensitive metrics)
-- Access control for proprietary knowledge
+### Knowledge Graph Construction
 
-### Phase III: Experiment Analysis Integration (Weeks 11-14)
+- [ ] **Entity Extraction**
+  - Identify statistical concepts from trained model outputs
+  - Extract definitions, formulas, relationships
+  - Tag by category (statistical test, metric, methodology)
 
-- Connect to experiment data warehouse
-- Real-time experiment status in RAG
-- Historical experiment search
-- Automated insights from past experiments
+- [ ] **Relationship Mapping**
+  - Map concept relationships: "power analysis REQUIRES sample_size, effect_size"
+  - Build prerequisite chains: "understand p-value BEFORE FDR"
+  - Connect related methods: "t-test SIMILAR_TO mann_whitney"
 
-### Phase IV: Fine-Tuning & Optimization (Weeks 15-18)
+- [ ] **SurrealDB Integration**
+  - Graph + document + vector database
+  - Schema design for concepts and relationships
+  - Efficient graph traversal queries
 
-- Fine-tune SLM on experimentation Q&A pairs
-- LoRA adapters for company-specific knowledge
-- Response quality improvements
-- Performance optimization
+### GraphRAG Pipeline
+
+- [ ] **Query Understanding**
+  - Entity recognition in user questions
+  - Intent classification (definition, calculation, methodology)
+
+- [ ] **Graph Traversal**
+  - BFS/DFS for concept exploration
+  - Weighted path finding
+  - Subgraph extraction around query entities
+
+- [ ] **Hybrid Retrieval**
+  - Combine fine-tuned model with graph context
+  - Enhanced multi-hop reasoning
+  - Improved citation tracking
+
+### Evaluation & Comparison
+
+- [ ] **Comparative Analysis**
+  - Fine-tuned SLM alone (Phase I)
+  - Fine-tuned SLM + GraphRAG (Phase II)
+  - Measure improvement on complex multi-hop questions
+
+## Future Enhancements
+
+### Phase III: Production Hardening
+
+- Monitoring and observability
+- A/B testing framework for model changes
+- User feedback collection
+- Continuous improvement pipeline
+
+### Phase IV: Advanced Features
+
+- Multi-turn conversations
+- Calculation tools integration
+- Experiment analysis integration
+- Internal knowledge base (company-specific)
 
 ## Success Metrics
 
-**Phase I Targets:**
+**Phase I Targets (Fine-Tuned SLM):**
 
-- ✅ 85%+ accuracy on statistical definition questions
-- ✅ 75%+ accuracy on methodology questions
-- ✅ Retrieval latency < 200ms
-- ✅ End-to-end latency < 2 seconds
-- ✅ 90%+ citation accuracy (retrieved context is actually relevant)
-- ✅ Cost < $0.001 per query (vs $0.01-0.03 for GPT-4)
+- 80%+ overall accuracy on test questions
+- 85%+ accuracy on statistical definition questions
+- 75%+ accuracy on methodology questions
+- End-to-end latency < 2 seconds
+- Cost < $0.001 per query (vs $0.01-0.03 for GPT-4)
+- Training cost < $10 total (data collection + fine-tuning)
+
+**Phase II Targets (SLM + GraphRAG):**
+
+- 90%+ accuracy on multi-hop reasoning questions
+- 95%+ citation accuracy (graph-backed answers)
+- Retrieval latency < 200ms
+- Improved context relevance through graph traversal
 
 ## Tech Stack
 
-| Component         | Technology                  | Reasoning                           |
-| ----------------- | --------------------------- | ----------------------------------- |
-| **Language**      | Python 3.13+                | ML ecosystem, rapid development     |
-| **Package Mgr**   | uv                          | 10-100x faster than pip             |
-| **Graph DB**      | SurrealDB                   | Native graph + document, easy setup |
-| **Vector Store**  | SurrealDB (native)          | Single DB for graph + embeddings    |
-| **Embeddings**    | sentence-transformers       | Local, fast, good quality           |
-| **LLM**           | Llama 3.2 3B                | Strong reasoning, 128K context      |
-| **Training**      | HuggingFace TRL + QLoRA     | Efficient 4-bit fine-tuning         |
-| **Inference**     | Ollama                      | Easy local deployment               |
-| **API**           | FastAPI                     | Async, auto-docs, type hints        |
-| **Orchestration** | Docker Compose              | Simple multi-service setup          |
-| **Testing**       | pytest                      | Standard Python testing             |
+| Component           | Technology                  | Status    | Reasoning                           |
+| ------------------- | --------------------------- | --------- | ----------------------------------- |
+| **Language**        | Python 3.13+                | ✅ Active | ML ecosystem, rapid development     |
+| **Package Mgr**     | uv                          | ✅ Active | 10-100x faster than pip             |
+| **Data Collection** | ArXiv, StackExchange API    | ✅ Active | Public Q&A and research papers      |
+| **Synthetic Data**  | Claude Sonnet 4.5           | ✅ Active | High-quality Q&A generation         |
+| **LLM**             | Llama 3.2 3B Instruct       | ✅ Active | Strong reasoning, 128K context      |
+| **Training**        | HuggingFace TRL + QLoRA     | ✅ Active | Efficient 4-bit fine-tuning         |
+| **Dataset Mgr**     | HuggingFace Datasets        | ✅ Active | Standard dataset loading            |
+| **Quantization**    | BitsAndBytes (4-bit)        | ✅ Active | Memory-efficient training           |
+| **API Framework**   | FastAPI                     | ✅ Active | Async, auto-docs, type hints        |
+| **Testing**         | pytest                      | ✅ Active | Standard Python testing             |
+| **Graph DB**        | SurrealDB                   | Phase II  | Native graph + document store       |
+| **Vector Store**    | SurrealDB (native)          | Phase II  | Single DB for graph + embeddings    |
+| **Embeddings**      | sentence-transformers       | Phase II  | Local, fast, good quality           |
+| **Inference**       | Ollama                      | Phase II  | Easy local deployment               |
+| **Orchestration**   | Docker Compose              | Phase II  | Multi-service setup                 |
 
 ## Quick Start
 
@@ -252,7 +312,10 @@ Build a domain-specific AI assistant that provides expert-level guidance on:
 
 - Python 3.13+
 - [uv](https://github.com/astral-sh/uv) package manager
-- Docker (for SurrealDB)
+- GPU with 6+ GB VRAM (recommended for training)
+- API Keys:
+  - StackExchange API key (optional, increases rate limit)
+  - Anthropic API key (required for synthetic Q&A generation)
 
 ### Setup
 
@@ -271,14 +334,50 @@ make setup
 # This will:
 # - Create virtual environment
 # - Install all dependencies
-# - Set up .env file
+# - Set up .env file (add your API keys here)
 ```
 
-### Usage (Future - Once Implemented)
+### Workflow
+
+**1. Collect Data**
 
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
+# Collect from Cross Validated (safe without API key)
+make collect-cv
+
+# Collect ArXiv papers metadata
+make collect-arxiv
+```
+
+**2. Generate Synthetic Q&A**
+
+```bash
+# Add your Anthropic API key to .env first
+# ANTHROPIC_API_KEY=sk-ant-your-key-here
+
+# Test with 10 papers (~$0.24)
+make generate-qa-test
+
+# Full generation from all papers (~$4-5)
+make generate-qa
+```
+
+**3. Train Model**
+
+```bash
+# Combine datasets and train (4-12 hours on GPU)
+make train-full
+
+# Or step by step:
+make combine-datasets
+make train
+```
+
+**4. Deploy (Coming Soon)**
+
+```bash
+# Run inference API
+make run
 
 # Start infrastructure
 docker-compose up -d
