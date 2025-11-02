@@ -14,9 +14,8 @@ from peft import LoraConfig, get_peft_model
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    TrainingArguments,
 )
-from trl import SFTTrainer
+from trl import SFTConfig, SFTTrainer
 
 from .config import TrainingConfig
 from .dataset import load_chatml_dataset, preprocess_chatml
@@ -187,8 +186,9 @@ class QLoRATrainer:
         """
         logger.info("Creating trainer...")
 
-        # Training arguments
-        training_args = TrainingArguments(
+        # SFT Configuration (combines training args + SFT-specific settings)
+        sft_config = SFTConfig(
+            # Training arguments
             output_dir=self.config.output_dir,
             num_train_epochs=self.config.num_train_epochs,
             per_device_train_batch_size=self.config.per_device_train_batch_size,
@@ -203,27 +203,29 @@ class QLoRATrainer:
             fp16=self.config.fp16,
             bf16=self.config.bf16,
             logging_steps=self.config.logging_steps,
-            evaluation_strategy="steps" if "test" in dataset else "no",
+            eval_strategy="steps" if "test" in dataset else "no",
             eval_steps=self.config.eval_steps if "test" in dataset else None,
+            save_strategy="steps",
             save_steps=self.config.save_steps,
             save_total_limit=self.config.save_total_limit,
             group_by_length=self.config.group_by_length,
             report_to=self.config.report_to,
             seed=self.config.seed,
             gradient_checkpointing=self.config.gradient_checkpointing,
-            # Push to hub disabled by default
             push_to_hub=False,
+            # SFT-specific arguments
+            dataset_text_field="text",  # ChatML formatted text field
+            max_length=self.config.max_seq_length,  # Renamed from max_seq_length in TRL v0.24+
+            packing=False,  # Don't pack multiple examples together
         )
 
         # Create SFT trainer
         trainer = SFTTrainer(
             model=self.model,
-            tokenizer=self.tokenizer,
+            processing_class=self.tokenizer,
             train_dataset=dataset["train"],
             eval_dataset=dataset.get("test"),
-            dataset_text_field="text",  # ChatML formatted text field
-            max_seq_length=self.config.max_seq_length,
-            args=training_args,
+            args=sft_config,
         )
 
         logger.info("✅ Trainer created")
