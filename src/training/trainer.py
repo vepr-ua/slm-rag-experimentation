@@ -7,19 +7,28 @@ Implements efficient fine-tuning of Llama 3.2 3B with:
 - Supervised Fine-Tuning (SFT)
 """
 
+import platform
 import torch
 from loguru import logger
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
+from peft import LoraConfig, get_peft_model
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
     TrainingArguments,
 )
 from trl import SFTTrainer
 
 from .config import TrainingConfig
 from .dataset import load_chatml_dataset, preprocess_chatml
+
+# Optional imports for CUDA-specific features
+try:
+    from peft import prepare_model_for_kbit_training
+    from transformers import BitsAndBytesConfig
+    BITSANDBYTES_AVAILABLE = True
+except ImportError:
+    BITSANDBYTES_AVAILABLE = False
+    logger.warning("bitsandbytes not available - 4-bit quantization disabled")
 
 
 class QLoRATrainer:
@@ -36,10 +45,30 @@ class QLoRATrainer:
         self.model = None
         self.tokenizer = None
         self.trainer = None
+        self.device = None
+
+    def _detect_device(self) -> str:
+        """
+        Detect the best available device for training.
+
+        Returns:
+            Device string: 'cuda', 'mps', or 'cpu'
+        """
+        if torch.cuda.is_available():
+            return "cuda"
+        elif torch.backends.mps.is_available():
+            # Check if we're actually on macOS
+            if platform.system() == "Darwin":
+                return "mps"
+        return "cpu"
 
     def setup(self) -> None:
         """Set up model, tokenizer, and training components."""
-        logger.info("Setting up QLoRA training...")
+        logger.info("Setting up training...")
+
+        # Detect device
+        self.device = self._detect_device()
+        logger.info(f"Using device: {self.device}")
 
         # Load tokenizer
         logger.info(f"Loading tokenizer: {self.config.model_name}")
@@ -53,32 +82,56 @@ class QLoRATrainer:
             self.tokenizer.pad_token = self.tokenizer.eos_token
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
-        # Configure 4-bit quantization
-        logger.info("Configuring 4-bit quantization (QLoRA)...")
-        bnb_config = BitsAndBytesConfig(
-            load_in_4bit=self.config.quantization.load_in_4bit,
-            bnb_4bit_compute_dtype=getattr(
-                torch, self.config.quantization.bnb_4bit_compute_dtype
-            ),
-            bnb_4bit_quant_type=self.config.quantization.bnb_4bit_quant_type,
-            bnb_4bit_use_double_quant=self.config.quantization.bnb_4bit_use_double_quant,
-        )
+        # Load model with or without quantization
+        if self.device == "cuda" and BITSANDBYTES_AVAILABLE and self.config.quantization.load_in_4bit:
+            # CUDA with 4-bit quantization (QLoRA)
+            logger.info("Configuring 4-bit quantization (QLoRA)...")
+            bnb_config = BitsAndBytesConfig(
+                load_in_4bit=self.config.quantization.load_in_4bit,
+                bnb_4bit_compute_dtype=getattr(
+                    torch, self.config.quantization.bnb_4bit_compute_dtype
+                ),
+                bnb_4bit_quant_type=self.config.quantization.bnb_4bit_quant_type,
+                bnb_4bit_use_double_quant=self.config.quantization.bnb_4bit_use_double_quant,
+            )
 
-        # Load model with quantization
-        logger.info(f"Loading model: {self.config.model_name}")
-        self.model = AutoModelForCausalLM.from_pretrained(
-            self.config.model_name,
-            quantization_config=bnb_config,
-            device_map="auto",
-            trust_remote_code=True,
-        )
+            logger.info(f"Loading model with 4-bit quantization: {self.config.model_name}")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.config.model_name,
+                quantization_config=bnb_config,
+                device_map="auto",
+                trust_remote_code=True,
+            )
 
-        # Prepare model for k-bit training
-        logger.info("Preparing model for k-bit training...")
-        self.model = prepare_model_for_kbit_training(
-            self.model,
-            use_gradient_checkpointing=self.config.gradient_checkpointing,
-        )
+            # Prepare model for k-bit training
+            logger.info("Preparing model for k-bit training...")
+            self.model = prepare_model_for_kbit_training(
+                self.model,
+                use_gradient_checkpointing=self.config.gradient_checkpointing,
+            )
+        else:
+            # Apple Silicon (MPS) or CPU - no quantization
+            if self.device == "mps":
+                logger.info("Apple Silicon detected - using MPS backend (no quantization)")
+            else:
+                logger.info("Using CPU or CUDA without quantization")
+
+            # Load model in FP16 or BF16
+            dtype = torch.bfloat16 if self.config.bf16 else (torch.float16 if self.config.fp16 else torch.float32)
+            logger.info(f"Loading model in {dtype}: {self.config.model_name}")
+
+            self.model = AutoModelForCausalLM.from_pretrained(
+                self.config.model_name,
+                torch_dtype=dtype,
+                device_map={"": self.device} if self.device != "cpu" else None,
+                trust_remote_code=True,
+                low_cpu_mem_usage=True,
+            )
+
+            # Enable gradient checkpointing if requested
+            if self.config.gradient_checkpointing:
+                logger.info("Enabling gradient checkpointing...")
+                self.model.gradient_checkpointing_enable()
 
         # Configure LoRA
         logger.info("Configuring LoRA adapters...")

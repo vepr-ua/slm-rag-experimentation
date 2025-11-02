@@ -29,10 +29,12 @@ help:
 	@echo "  make generate-qa-test - Generate from 10 papers (test, ~\$0.24)"
 	@echo "  make generate-qa      - Generate from all papers (~\$4-5)"
 	@echo ""
-	@echo "Model Training (requires GPU with 6+ GB VRAM):"
+	@echo "Model Training:"
 	@echo "  make combine-datasets - Combine Cross Validated + ArXiv datasets"
-	@echo "  make train            - Train Llama 3.2 3B with QLoRA (default config)"
-	@echo "  make train-full       - Combine datasets and train (4-12 hours)"
+	@echo "  make test-apple       - Test Apple Silicon training setup"
+	@echo "  make train-apple      - Train on Apple Silicon (Mac M1/M2/M3, 8-16 hours)"
+	@echo "  make train            - Train Llama 3.2 3B with QLoRA (Linux GPU, 4-12 hours)"
+	@echo "  make train-full       - Combine datasets and train (Linux GPU)"
 	@echo "  make train-custom     - Train with custom config (CONFIG=path/to/config.json)"
 	@echo ""
 	@echo "Infrastructure:"
@@ -189,6 +191,17 @@ train-custom:
 		exit 1; \
 	fi
 	python scripts/train_model.py --config $(CONFIG)
+
+test-apple:
+	@echo "Testing Apple Silicon training setup..."
+	python scripts/test_apple_silicon.py
+
+train-apple:
+	@echo "Training on Apple Silicon (MPS backend, no quantization)..."
+	@echo "Requirements: Mac with Apple Silicon (M1/M2/M3), 16+ GB RAM"
+	@echo "Expected time: 8-16 hours"
+	@echo ""
+	python scripts/train_model.py --config configs/apple_silicon_config.json
 
 # Knowledge base (deprecated for now, focusing on model training)
 ingest-data:

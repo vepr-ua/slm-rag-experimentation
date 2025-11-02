@@ -1,0 +1,52 @@
+{
+  "model_name": "meta-llama/Llama-3.2-3B-Instruct",
+  "max_seq_length": 2048,
+  "train_data_path": "data/processed/combined_train.jsonl",
+  "eval_data_path": null,
+  "train_test_split": 0.1,
+  "num_train_epochs": 3,
+  "per_device_train_batch_size": 1,
+  "per_device_eval_batch_size": 1,
+  "gradient_accumulation_steps": 8,
+  "learning_rate": 0.0002,
+  "warmup_ratio": 0.03,
+  "lr_scheduler_type": "cosine",
+  "optim": "adamw_torch",
+  "weight_decay": 0.01,
+  "max_grad_norm": 1.0,
+  "generation_max_length": 512,
+  "generation_temperature": 0.7,
+  "output_dir": "models/checkpoints",
+  "logging_steps": 10,
+  "eval_steps": 100,
+  "save_steps": 250,
+  "save_total_limit": 2,
+  "fp16": false,
+  "bf16": false,
+  "gradient_checkpointing": true,
+  "group_by_length": true,
+  "seed": 42,
+  "report_to": "none",
+  "lora": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "bias": "none",
+    "task_type": "CAUSAL_LM"
+  },
+  "quantization": {
+    "load_in_4bit": false,
+    "bnb_4bit_compute_dtype": "bfloat16",
+    "bnb_4bit_quant_type": "nf4",
+    "bnb_4bit_use_double_quant": false
+  }
+}

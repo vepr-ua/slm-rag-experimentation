@@ -31,7 +31,6 @@ dependencies = [
     "peft>=0.13.0",  # LoRA adapters
     "trl>=0.11.0",  # Transformer Reinforcement Learning (SFT)
     "datasets>=3.0.0",  # HuggingFace datasets
-    "bitsandbytes>=0.44.0",  # 4-bit quantization
     "accelerate>=1.0.0",  # Multi-GPU training
 
     # Data Processing
@@ -75,6 +74,11 @@ dev = [
     "pandas-stubs>=2.2.0",
 ]
 
+cuda = [
+    # CUDA-specific training dependencies (Linux/Windows only)
+    "bitsandbytes>=0.44.0",  # 4-bit quantization with CUDA
+]
+
 graphrag = [
     # Phase II: GraphRAG components (postponed)
     "surrealdb>=0.3.2",  # Graph + document + vector database
@@ -85,7 +89,7 @@ graphrag = [
 ]
 
 all = [
-    "slm-rag-experimentation[dev,graphrag]",
+    "slm-rag-experimentation[dev,cuda,graphrag]",
 ]
 
 [build-system]
