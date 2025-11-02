@@ -64,6 +64,19 @@ The planned system has these layers:
 
 ## Development Commands
 
+### Prerequisites
+
+This project uses **uv** for fast, reliable package management.
+
+**Install uv:**
+```bash
+# macOS/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Or use make
+make install-uv
+```
+
 ### Initial Setup
 
 **Automated setup (recommended):**
@@ -71,16 +84,26 @@ The planned system has these layers:
 make setup
 ```
 
+This will:
+1. Check for uv installation
+2. Verify Python 3.13+
+3. Create virtual environment
+4. Install all dependencies
+5. Set up .env file
+
 **Manual setup:**
 ```bash
-# Create virtual environment
-python3 -m venv .venv
+# Install uv (if not already installed)
+make install-uv
+
+# Create virtual environment with uv
+uv venv --python 3.13
 
 # Activate virtual environment
 source .venv/bin/activate  # On macOS/Linux
 
-# Install dependencies with development tools
-pip install -e ".[dev]"
+# Install dependencies with uv
+uv pip install -e ".[dev]"
 
 # Copy environment template
 cp .env.example .env
@@ -177,13 +200,17 @@ The project follows a 6-week Phase I roadmap:
 ## Tech Stack
 
 - **Language**: Python 3.13+
-- **Graph DB**: SurrealDB (native graph + document + vector)
+- **Package Manager**: uv (10-100x faster than pip)
+- **Graph DB**: SurrealDB (native graph + document + vector) - *Postponed*
 - **Embeddings**: sentence-transformers (local)
-- **LLM**: Phi-3 / Llama 3.2 / Qwen2.5 (3-4B params)
+- **LLM**: Llama 3.2 3B (strong reasoning, 128K context)
+- **Training**: HuggingFace TRL + QLoRA (4-bit fine-tuning)
 - **Inference**: Ollama
 - **API**: FastAPI
 - **Orchestration**: Docker Compose
 - **Testing**: pytest
+
+**Current Focus**: Model training pipeline (data collection → fine-tuning)
 
 ## Success Metrics (Phase I Targets)
 

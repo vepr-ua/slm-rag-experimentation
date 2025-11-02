@@ -5,30 +5,45 @@ set -e
 
 echo "🚀 Setting up slm-rag-experimentation..."
 
-# Check Python version
-echo "Checking Python version..."
-PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
-REQUIRED_VERSION="3.13"
-
-if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 13) else 1)"; then
-    echo "❌ Python 3.13+ is required. Found: $PYTHON_VERSION"
+# Check if uv is installed
+if ! command -v uv &> /dev/null; then
+    echo "❌ uv is not installed!"
+    echo ""
+    echo "Please install uv first:"
+    echo "  macOS/Linux: curl -LsSf https://astral.sh/uv/install.sh | sh"
+    echo "  Or use: make install-uv"
+    echo ""
     exit 1
 fi
-echo "✅ Python version: $PYTHON_VERSION"
+echo "✅ uv is installed"
 
-# Check if uv is available, otherwise use pip
-if command -v uv &> /dev/null; then
-    echo "✅ Using uv for package management"
-    PKG_MANAGER="uv pip"
+# Check Python version
+echo "Checking Python version..."
+if ! python3 --version &> /dev/null; then
+    echo "❌ python3 not found!"
+    exit 1
+fi
+
+PYTHON_VERSION=$(python3 --version 2>&1 | awk '{print $2}')
+echo "Found Python: $PYTHON_VERSION"
+
+if ! python3 -c "import sys; exit(0 if sys.version_info >= (3, 13) else 1)" 2>/dev/null; then
+    echo "⚠️  Warning: Python 3.13+ is recommended. Found: $PYTHON_VERSION"
+    echo "Continuing with Python $PYTHON_VERSION..."
+    PYTHON_CMD="python3"
 else
-    echo "ℹ️  uv not found, using pip. Consider installing uv: https://github.com/astral-sh/uv"
-    PKG_MANAGER="pip"
+    echo "✅ Python version OK"
+    PYTHON_CMD="python3"
 fi
 
 # Create virtual environment if it doesn't exist
 if [ ! -d ".venv" ]; then
-    echo "Creating virtual environment..."
-    python3 -m venv .venv
+    echo "Creating virtual environment with uv..."
+    # Try with specific version first, fall back to system python
+    if ! uv venv .venv --python 3.13 2>/dev/null; then
+        echo "Python 3.13 not found, using system python3..."
+        uv venv .venv
+    fi
     echo "✅ Virtual environment created"
 else
     echo "✅ Virtual environment already exists"
@@ -36,19 +51,16 @@ fi
 
 # Activate virtual environment
 echo "Activating virtual environment..."
-source .venv/bin/activate
-
-# Upgrade pip
-echo "Upgrading pip..."
-python -m pip install --upgrade pip
-
-# Install dependencies
-echo "Installing dependencies..."
-if [ "$PKG_MANAGER" = "uv pip" ]; then
-    uv pip install -e ".[dev]"
+if [ -f ".venv/bin/activate" ]; then
+    source .venv/bin/activate
 else
-    pip install -e ".[dev]"
+    echo "❌ Virtual environment activation script not found!"
+    exit 1
 fi
+
+# Install dependencies with uv
+echo "Installing dependencies with uv..."
+uv pip install -e ".[dev]"
 echo "✅ Dependencies installed"
 
 # Create .env file if it doesn't exist

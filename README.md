@@ -234,36 +234,77 @@ Build a domain-specific AI assistant that provides expert-level guidance on:
 
 | Component         | Technology                  | Reasoning                           |
 | ----------------- | --------------------------- | ----------------------------------- |
-| **Language**      | Python 3.11+                | ML ecosystem, rapid development     |
+| **Language**      | Python 3.13+                | ML ecosystem, rapid development     |
+| **Package Mgr**   | uv                          | 10-100x faster than pip             |
 | **Graph DB**      | SurrealDB                   | Native graph + document, easy setup |
 | **Vector Store**  | SurrealDB (native)          | Single DB for graph + embeddings    |
 | **Embeddings**    | sentence-transformers       | Local, fast, good quality           |
-| **LLM**           | Phi-3 / Llama 3.2 / Qwen2.5 | 3-4B params, good stats reasoning   |
+| **LLM**           | Llama 3.2 3B                | Strong reasoning, 128K context      |
+| **Training**      | HuggingFace TRL + QLoRA     | Efficient 4-bit fine-tuning         |
 | **Inference**     | Ollama                      | Easy local deployment               |
 | **API**           | FastAPI                     | Async, auto-docs, type hints        |
 | **Orchestration** | Docker Compose              | Simple multi-service setup          |
 | **Testing**       | pytest                      | Standard Python testing             |
 
-## End Goal
+## Quick Start
+
+### Prerequisites
+
+- Python 3.13+
+- [uv](https://github.com/astral-sh/uv) package manager
+- Docker (for SurrealDB)
+
+### Setup
 
 ```bash
 # Clone repo
 git clone <repo-url>
-cd experimentation-slm
+cd slm-rag-experimentation
 
-# Install dependencies
-pip install -e .
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# or: make install-uv
+
+# Run automated setup
+make setup
+
+# This will:
+# - Create virtual environment
+# - Install all dependencies
+# - Set up .env file
+```
+
+### Usage (Future - Once Implemented)
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate
 
 # Start infrastructure
 docker-compose up -d
 
 # Start API server
-python -m src.api.main
+python -m uvicorn src.api.main:app --reload
 
 # Test query
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
   -d '{"question": "What is statistical power?"}'
+```
+
+### Current Focus: Model Training
+
+We're currently building the training data pipeline and SLM fine-tuning:
+
+```bash
+# Collect training data from Cross Validated
+make collect-cv
+
+# Collect ArXiv papers for synthetic generation
+make collect-arxiv
+
+# Test configuration
+make test-config
 ```
 
 ## Key Resources

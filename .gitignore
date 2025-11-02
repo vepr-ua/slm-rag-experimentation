@@ -27,3 +27,6 @@ config/secrets.*
 # Logs
 *.log
 logs/
+
+# Env
+.env

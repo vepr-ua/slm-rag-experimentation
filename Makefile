@@ -3,29 +3,54 @@
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  make install      - Install production dependencies"
-	@echo "  make install-dev  - Install development dependencies"
+	@echo ""
+	@echo "Setup (requires uv package manager):"
+	@echo "  make install-uv   - Install uv package manager"
 	@echo "  make setup        - Full project setup (recommended for first time)"
+	@echo "  make install      - Install production dependencies (requires uv)"
+	@echo "  make install-dev  - Install development dependencies (requires uv)"
+	@echo ""
+	@echo "Development:"
 	@echo "  make test         - Run tests"
 	@echo "  make test-cov     - Run tests with coverage report"
+	@echo "  make test-config  - Test configuration loading from .env"
 	@echo "  make lint         - Run linters (ruff, mypy)"
 	@echo "  make format       - Format code (black, isort, ruff)"
 	@echo "  make clean        - Remove build artifacts and cache"
+	@echo ""
+	@echo "Data Collection (for model training):"
+	@echo "  make collect-data     - Collect from all sources (slow, respects API limits)"
+	@echo "  make collect-cv       - Collect from Cross Validated (100 questions, safe)"
+	@echo "  make collect-cv-full  - Collect 1000+ questions (requires API key)"
+	@echo "  make collect-arxiv    - Collect ArXiv papers metadata"
+	@echo "  make collect-arxiv-pdfs - Download ArXiv PDFs (very slow)"
+	@echo ""
+	@echo "Infrastructure:"
 	@echo "  make docker-up    - Start Docker services (SurrealDB)"
 	@echo "  make docker-down  - Stop Docker services"
 	@echo "  make run          - Run the API server"
 	@echo "  make dev          - Run API server in development mode (auto-reload)"
 
-# Installation
+# Installation (requires uv)
 install:
-	pip install -e .
+	uv pip install -e .
 
 install-dev:
-	pip install -e ".[dev]"
+	uv pip install -e ".[dev]"
 
-# Full setup
+# Full setup (recommended - checks for uv and sets everything up)
 setup:
 	bash scripts/setup.sh
+
+# Install uv (if not already installed)
+install-uv:
+	@echo "Installing uv package manager..."
+	@if command -v uv &> /dev/null; then \
+		echo "✅ uv is already installed"; \
+	else \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "✅ uv installed. Restart your shell or run: source ~/.cargo/env"; \
+	fi
 
 # Testing
 test:
@@ -86,7 +111,37 @@ db-setup:
 db-reset:
 	python scripts/reset_db.py
 
-# Knowledge base
+# Configuration
+test-config:
+	@echo "Testing configuration loading from .env..."
+	python scripts/test_config.py
+
+# Data Collection (for model training)
+# Note: Respects API rate limits. Add API keys to .env for higher limits.
+collect-data:
+	@echo "⚠️  This will collect from all sources. Estimated time: ~30+ minutes."
+	@echo "Press Ctrl+C within 5 seconds to cancel..."
+	@sleep 5
+	python scripts/collect_data.py --source all
+
+collect-cv:
+	@echo "Collecting from Cross Validated (max 100 questions, safe for no API key)"
+	python scripts/collect_data.py --source cross-validated --max-questions 100
+
+collect-cv-full:
+	@echo "⚠️  Collecting 1000+ questions. Requires StackExchange API key in .env"
+	python scripts/collect_data.py --source cross-validated --max-questions 1000
+
+collect-arxiv:
+	@echo "Collecting ArXiv papers (metadata only, no PDFs)"
+	python scripts/collect_data.py --source arxiv
+
+collect-arxiv-pdfs:
+	@echo "⚠️  Downloading PDFs may take a long time. Press Ctrl+C to cancel..."
+	@sleep 3
+	python scripts/collect_data.py --source arxiv --download-pdfs
+
+# Knowledge base (deprecated for now, focusing on model training)
 ingest-data:
 	python scripts/ingest_data.py
 
