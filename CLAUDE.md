@@ -17,7 +17,33 @@ This is an experimental project building a Small Language Model (SLM) powered by
 This is a very early-stage project (initial commit phase). The repository currently contains:
 - Basic Python project structure with pyproject.toml
 - Comprehensive README.md documenting the complete vision and roadmap
+- Directory structure set up for development
 - No implementation code yet (main.py is a placeholder)
+
+## Directory Structure
+
+```
+src/
+├── api/          # FastAPI server (endpoints, models, middleware)
+├── graph/        # SurrealDB client and graph traversal algorithms
+├── rag/          # RAG pipeline (retrieval, query understanding, context assembly)
+├── llm/          # SLM integration (Ollama/vLLM client, prompts, inference)
+├── knowledge/    # Knowledge base construction (entity extraction, data loaders)
+└── utils/        # Common utilities (logging, config, metrics)
+
+tests/            # Mirror structure of src/ for unit tests
+
+data/
+├── raw/          # Raw source documents (textbooks, papers, blogs)
+├── processed/    # Extracted entities and relationships
+└── embeddings/   # Vector embeddings and model artifacts
+
+config/           # Configuration files
+scripts/          # Utility scripts (setup, ingestion, evaluation)
+docs/             # Additional documentation
+```
+
+**Note**: Each major module has its own README.md explaining its purpose and planned components.
 
 ## Project Architecture
 

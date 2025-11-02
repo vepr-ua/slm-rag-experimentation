@@ -8,3 +8,21 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Data directories (large files, embeddings, source documents)
+data/raw/
+data/processed/
+data/embeddings/
+
+# Config files that may contain secrets
+config/*.env
+config/secrets.*
+
+# Model files
+*.bin
+*.safetensors
+*.gguf
+
+# Logs
+*.log
+logs/
