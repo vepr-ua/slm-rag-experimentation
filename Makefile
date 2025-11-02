@@ -196,6 +196,10 @@ test-apple:
 	@echo "Testing Apple Silicon training setup..."
 	python scripts/test_apple_silicon.py
 
+test-model:
+	@echo "Testing trained model with sample questions..."
+	python scripts/test_trained_model.py
+
 train-apple:
 	@echo "Training on Apple Silicon (MPS backend, no quantization)..."
 	@echo "Requirements: Mac with Apple Silicon (M1/M2/M3), 16+ GB RAM"
