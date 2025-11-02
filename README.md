@@ -2,6 +2,10 @@
 
 A specialized Small Language Model (SLM) powered by Graph-based Retrieval Augmented Generation (GraphRAG) for answering questions about experimentation methodology, statistical analysis, and A/B testing best practices.
 
+## Usage of LLMs
+
+I will be leveraging Claude and other LLM tools to help me get to a proof of concept faster. I will continue to use my software engineering skills to direct, fix, and modify the project code. I'd like the code to be readable and exercising the best practices for security and performance.
+
 ## Project Vision
 
 Build a domain-specific AI assistant that provides expert-level guidance on:
