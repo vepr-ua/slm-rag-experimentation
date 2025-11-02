@@ -70,11 +70,17 @@ class QLoRATrainer:
         self.device = self._detect_device()
         logger.info(f"Using device: {self.device}")
 
+        # Get HuggingFace token from environment (set by train script)
+        import os
+        hf_token = os.getenv("HF_TOKEN")
+        use_auth_token = hf_token if hf_token else True  # True = use cached token from CLI login
+
         # Load tokenizer
         logger.info(f"Loading tokenizer: {self.config.model_name}")
         self.tokenizer = AutoTokenizer.from_pretrained(
             self.config.model_name,
             trust_remote_code=True,
+            token=use_auth_token,
         )
 
         # Llama tokenizers need pad token
@@ -101,6 +107,7 @@ class QLoRATrainer:
                 quantization_config=bnb_config,
                 device_map="auto",
                 trust_remote_code=True,
+                token=use_auth_token,
             )
 
             # Prepare model for k-bit training
@@ -126,6 +133,7 @@ class QLoRATrainer:
                 device_map={"": self.device} if self.device != "cpu" else None,
                 trust_remote_code=True,
                 low_cpu_mem_usage=True,
+                token=use_auth_token,
             )
 
             # Enable gradient checkpointing if requested

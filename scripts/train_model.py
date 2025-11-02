@@ -17,8 +17,10 @@ Usage:
 """
 
 import argparse
+import os
 from pathlib import Path
 
+from dotenv import load_dotenv
 from loguru import logger
 from rich.console import Console
 from rich.panel import Panel
@@ -26,6 +28,9 @@ from rich.panel import Panel
 from src.training.config import TrainingConfig, load_config, save_config
 from src.training.dataset import combine_datasets, get_dataset_stats
 from src.training.trainer import QLoRATrainer
+
+# Load environment variables from .env
+load_dotenv()
 
 console = Console()
 
@@ -83,6 +88,23 @@ def combine_training_data(
 def train(config_path: Path = None):
     """Run training with specified config."""
     console.print("\n[bold cyan]Starting QLoRA Fine-Tuning[/bold cyan]\n")
+
+    # Check HuggingFace token
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        console.print(
+            "[red]❌ HuggingFace token not found![/red]\n\n"
+            "Llama 3.2 requires authentication. Please:\n\n"
+            "1. Accept the license: https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct\n"
+            "2. Get your token: https://huggingface.co/settings/tokens\n"
+            "3. Add to .env file: HF_TOKEN=\"hf_...\"\n\n"
+            "Or login via CLI: huggingface-cli login\n"
+        )
+        return
+
+    # Set HuggingFace token for transformers library
+    os.environ["HF_TOKEN"] = hf_token
+    console.print("[green]✅ HuggingFace token loaded[/green]")
 
     # Load config
     if config_path:
