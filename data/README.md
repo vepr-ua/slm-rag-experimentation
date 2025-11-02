@@ -23,6 +23,12 @@ Vector embeddings:
 - Document chunk embeddings
 - Model artifacts
 
+### `db/`
+SurrealDB database files:
+- Database storage (when using Docker with local volume)
+- Automatically created by Docker Compose
+- Contains knowledge graph and document store
+
 ## Note
 
 This directory is excluded from git (see .gitignore). Data should be sourced from original locations or stored separately.

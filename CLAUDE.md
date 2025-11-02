@@ -64,30 +64,88 @@ The planned system has these layers:
 
 ## Development Commands
 
-Since the project is in early stages, there are no build, test, or run commands yet.
+### Initial Setup
 
-**Project setup (when dependencies are added):**
+**Automated setup (recommended):**
+```bash
+make setup
+```
+
+**Manual setup:**
 ```bash
 # Create virtual environment
-uv venv
+python3 -m venv .venv
 
 # Activate virtual environment
 source .venv/bin/activate  # On macOS/Linux
 
-# Install dependencies (when added to pyproject.toml)
-uv pip install -e .
+# Install dependencies with development tools
+pip install -e ".[dev]"
+
+# Copy environment template
+cp .env.example .env
+# Edit .env with your configuration
 ```
 
-**Planned future commands (from README):**
-```bash
-# Start infrastructure (SurrealDB, etc.)
-docker-compose up -d
+### Common Commands
 
-# Start API server
-python -m src.api.main
+All commands are available via `make`. Run `make help` to see all options.
+
+**Development:**
+```bash
+make install-dev    # Install all dependencies
+make dev            # Run API server with auto-reload
+make test           # Run tests
+make test-cov       # Run tests with coverage
+make lint           # Run linters (ruff, mypy)
+make format         # Format code (black, isort, ruff)
+```
+
+**Infrastructure:**
+```bash
+make docker-up      # Start SurrealDB
+make docker-down    # Stop Docker services
+make docker-logs    # View Docker logs
+```
+
+**Database:**
+```bash
+make db-setup       # Initialize database schema
+make db-reset       # Reset database
+```
+
+**Data & Knowledge Base:**
+```bash
+make ingest-data    # Ingest source documents
+make build-graph    # Build knowledge graph
+```
+
+**Evaluation:**
+```bash
+make evaluate       # Run evaluation framework
+make benchmark      # Performance benchmarks
+```
+
+**Cleanup:**
+```bash
+make clean          # Remove build artifacts and cache
+```
+
+### Direct Commands (without Make)
+
+```bash
+# Run API server
+python -m uvicorn src.api.main:app --reload
 
 # Run tests
 pytest
+
+# Format code
+black src tests
+ruff check --fix src tests
+
+# Start infrastructure
+docker-compose up -d
 ```
 
 ## Development Phases

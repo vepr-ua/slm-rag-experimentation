@@ -1,0 +1,56 @@
+# Auto detect text files and normalize line endings to LF
+* text=auto eol=lf
+
+# Python files
+*.py text eol=lf
+*.pyx text eol=lf
+*.pyi text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Config files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+.env* text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+
+# Binary files
+*.pkl binary
+*.pickle binary
+*.npy binary
+*.npz binary
+*.h5 binary
+*.hdf5 binary
+*.pt binary
+*.pth binary
+*.onnx binary
+*.bin binary
+*.safetensors binary
+*.gguf binary
+
+# Images
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+
+# Don't allow generated files to be merged
+*.lock merge=binary

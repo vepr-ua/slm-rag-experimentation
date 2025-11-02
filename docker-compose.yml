@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    container_name: slm-rag-surrealdb
+    ports:
+      - "8001:8000"  # Host:Container - Avoid collision with API on 8000
+    command:
+      - start
+      - --log=info
+      - --user=root
+      - --pass=root
+      - file:/data/database.db  # Persistent storage
+    volumes:
+      - ./data/db:/data  # Local directory for persistence
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - slm-rag-network
+
+  # Ollama for local LLM inference
+  # Uncomment to run Ollama in Docker (requires GPU support)
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: slm-rag-ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_models:/root/.ollama
+  #   restart: unless-stopped
+  #   networks:
+  #     - slm-rag-network
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+# Volumes - using local directory mounts instead of named volumes
+# volumes:
+  # ollama_models:
+  #   driver: local
+
+networks:
+  slm-rag-network:
+    driver: bridge

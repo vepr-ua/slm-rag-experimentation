@@ -9,10 +9,11 @@ wheels/
 # Virtual environments
 .venv
 
-# Data directories (large files, embeddings, source documents)
+# Data directories (large files, embeddings, source documents, database)
 data/raw/
 data/processed/
 data/embeddings/
+data/db/
 
 # Config files that may contain secrets
 config/*.env
